@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>T1D coaching leads</h1>
+
+<div class="pills">
+  <a class="pill {% if not status and not view %}on{% endif %}" href="/admin">All</a>
+  <a class="pill warn {% if view == 'needs_reply' %}on{% endif %}" href="/admin?view=needs_reply">
+    Needs your reply ({{ counts.needs_reply }})</a>
+  <a class="pill warn {% if view == 'follow_up' %}on{% endif %}" href="/admin?view=follow_up">
+    Follow-ups due ({{ counts.follow_up_due }})</a>
+  {% for s in statuses %}
+  <a class="pill {% if status == s %}on{% endif %}" href="/admin?status={{ s }}">
+    {{ s.replace('_', ' ') }} ({{ counts[s] }})</a>
+  {% endfor %}
+  <a class="pill" href="/admin/export.csv">Export CSV</a>
+</div>
+
+<div class="card table-wrap">
+{% if leads %}
+<table>
+  <thead><tr>
+    <th>Who</th><th>Status</th><th>Stage</th><th>Answers</th><th>Follow up</th><th>Last update</th>
+  </tr></thead>
+  <tbody>
+  {% for l in leads %}
+  <tr>
+    <td>
+      <a href="/admin/leads/{{ l.ig_id }}">{{ '@' ~ l.username if l.username else l.ig_id }}</a>
+      {% if l.needs_reply %}<span class="flag">reply</span>{% endif %}
+      <div class="muted">via {{ l.source }}</div>
+    </td>
+    <td>{{ l.status.replace('_', ' ') }}</td>
+    <td>{{ l.stage }}</td>
+    <td>{% for k, v in l.answers.items() %}<div><span class="muted">{{ k.replace('_', ' ') }}:</span> {{ v }}</div>{% endfor %}</td>
+    <td>{% if l.follow_up_on %}{{ l.follow_up_on }}{% if l.follow_up_on <= today %} <span class="flag">due</span>{% endif %}{% endif %}</td>
+    <td class="muted">{{ l.updated_at[:16].replace('T', ' ') }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No leads here yet. They appear when someone comments or DMs one of your keywords.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.username or lead.ig_id }}{% endblock %}
+{% block body %}
+<p><a href="/admin">← All leads</a></p>
+<h1>{{ '@' ~ lead.username if lead.username else lead.ig_id }}</h1>
+{% if lead.username %}
+<p><a href="https://ig.me/m/{{ lead.username }}" target="_blank" rel="noopener">Open DM in Instagram</a>
+ · <a href="https://instagram.com/{{ lead.username }}" target="_blank" rel="noopener">Profile</a></p>
+{% endif %}
+
+<div class="grid">
+  <div class="card">
+    <h2 style="margin-top:0">Details</h2>
+    <div><span class="muted">Came from:</span> {{ lead.source }}</div>
+    <div><span class="muted">Stage:</span> {{ lead.stage }}</div>
+    <div><span class="muted">Consented:</span> {{ lead.consent_at or 'no' }}</div>
+    <div><span class="muted">Last message from them:</span> {{ lead.last_inbound_at or 'n/a' }}</div>
+    <p class="muted">Instagram only lets you message someone within 24 hours of their last message to you.</p>
+    {% if lead.answers %}
+    <h2>Answers</h2>
+    {% for k, v in lead.answers.items() %}<div><span class="muted">{{ k.replace('_', ' ') }}:</span> {{ v }}</div>{% endfor %}
+    {% endif %}
+  </div>
+
+  <form class="card" method="post" action="/admin/leads/{{ lead.ig_id }}">
+    <h2 style="margin-top:0">Your notes</h2>
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      {% for s in statuses %}<option value="{{ s }}" {% if s == lead.status %}selected{% endif %}>{{ s.replace('_', ' ') }}</option>{% endfor %}
+    </select>
+    <label for="follow_up_on">Follow up on</label>
+    <input id="follow_up_on" type="date" name="follow_up_on" value="{{ lead.follow_up_on or '' }}">
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="5">{{ lead.notes }}</textarea>
+    <label><input type="checkbox" name="needs_reply" value="1" {% if lead.needs_reply %}checked{% endif %}> Needs my reply</label>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<h2>Conversation with the bot</h2>
+<div class="card">
+  {% for m in messages %}<div class="msg {{ m.direction }}">{{ m.text }}</div>{% else %}<p class="muted">Nothing logged.</p>{% endfor %}
+  <p class="muted">Messages they send before saying yes aren't stored. Read those in the Instagram inbox.</p>
+</div>
+
+<form method="post" action="/admin/leads/{{ lead.ig_id }}/delete"
+      onsubmit="return confirm('Delete this lead and everything stored about them?')">
+  <button class="danger" type="submit">Delete lead and data</button>
+</form>
+{% endblock %}
